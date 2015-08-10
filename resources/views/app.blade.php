@@ -36,7 +36,7 @@
 					<div class="col-md-3">
 						<p></p>
 						<ul>
-							<li><a class="grey-text text-lighten-3" href="#!">view on GitHub</a></li>
+							<li><a class="grey-text text-lighten-3" href="https://github.com/madbob/DarkAge">view on GitHub</a></li>
 							<li><a class="grey-text text-lighten-3" href="https://www.flickr.com/photos/robertoguido/">me on Flickr</a></li>
 						</ul>
 					</div>
