@@ -58,8 +58,7 @@ $(document).ready(function() {
 		minigrid('.gallery', '.wrap', 0);
 	});
 
-	var grid = require('minigrid');
-	grid('.gallery', '.wrap');
+	minigrid('.gallery', '.wrap', 0);
 
 	$('.gallery img').click(function() {
 		var selected = $(this).hasClass('selected');
