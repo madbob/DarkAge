@@ -20,14 +20,85 @@ class HomeController extends Controller
 		return view('home', $data);
 	}
 
-	private function doCall($params)
+	function assembleUrl($params)
 	{
 		$params['api_key'] = env('FLICKR_API_KEY');
 		$params['format'] = 'json';
 		$params['nojsoncallback'] = 1;
 
 		$api = 'https://api.flickr.com/services/rest/';
-		$url = $api . '?' . http_build_query($params);
+		return $api . '?' . http_build_query($params);
+	}
+
+	public static function getPhotoByURL($handle)
+	{
+		$i = curl_getinfo($handle);
+		if ($i === false)
+			return null;
+
+		$parts = parse_url($i['url']);
+		parse_str($parts['query'], $query);
+		$id = $query['photo_id'];
+
+		return Photo::where('originalid', '=', $id)->first();
+	}
+
+	/*
+		Mostly get from http://www.onlineaspect.com/2009/01/26/how-to-use-curl_multi-without-blocking/
+	*/
+	function rollingCurl($params, $callback)
+	{
+		$rolling_window = 10;
+		$rolling_window = (sizeof($params) < $rolling_window) ? sizeof($params) : $rolling_window;
+		$total_requests = sizeof($params);
+
+		$master = curl_multi_init();
+		$curl_arr = array();
+
+		$options = array(CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => false);
+
+		for ($i = 0; $i < $rolling_window; $i++) {
+			$ch = curl_init();
+			$p = $params[$i];
+			$url = $this->assembleUrl($p);
+			$options[CURLOPT_URL] = $url;
+			curl_setopt_array($ch, $options);
+			curl_multi_add_handle($master, $ch);
+		}
+
+		do {
+			while(($execrun = curl_multi_exec($master, $running)) == CURLM_CALL_MULTI_PERFORM);
+			if($execrun != CURLM_OK)
+				break;
+
+			while($done = curl_multi_info_read($master)) {
+				$info = curl_getinfo($done['handle']);
+				if ($info['http_code'] == 200)  {
+					$output = curl_multi_getcontent($done['handle']);
+
+					$callback(json_decode($output), $done['handle']);
+
+					if ($i < $total_requests) {
+						$ch = curl_init();
+						$p = $params[$i++];
+						$url = $this->assembleUrl($p);
+						$options[CURLOPT_URL] = $url;
+						curl_setopt_array($ch, $options);
+						curl_multi_add_handle($master, $ch);
+					}
+
+					curl_multi_remove_handle($master, $done['handle']);
+				}
+			}
+		} while ($running);
+
+		curl_multi_close($master);
+		return true;
+	}
+
+	private function doCall($params)
+	{
+		$url = $this->assembleUrl($params);
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -105,34 +176,50 @@ class HomeController extends Controller
 			return "ko";
 		}
 
+		$paramsSizes = [];
+		$paramsInfos = [];
+
 		foreach($ids as $id) {
 			$photo = new Photo();
 			$photo->set_id = $set->id;
 			$photo->votes = 0;
 			$photo->originalid = $id;
 
-			$params = array(
+			$paramsSizes[] = array(
 				'method' => 'flickr.photos.getSizes',
 				'photo_id' => $id
 			);
-			$sizes = $this->doCall($params);
-			foreach($sizes->sizes->size as $s) {
-				if ($s->label == 'Small') {
-					$photo->preview = $s->source;
-					break;
-				}
-			}
 
-			$params = array(
+			$paramsInfos[] = array(
 				'method' => 'flickr.photos.getInfo',
 				'photo_id' => $id
 			);
-			$info = $this->doCall($params);
-			$photo->date = date('Y-m-d G:i:s', $info->photo->dates->posted);
-			$photo->url = $info->photo->urls->url[0]->_content;
 
 			$photo->save();
 		}
+
+		$this->rollingCurl($paramsSizes, function($sizes, $handle) {
+			$photo = HomeController::getPhotoByURL($handle);
+			if ($photo != null) {
+				foreach($sizes->sizes->size as $s) {
+					if ($s->label == 'Small') {
+						$photo->preview = $s->source;
+						break;
+					}
+				}
+
+				$photo->save();
+			}
+		});
+
+		$this->rollingCurl($paramsInfos, function($info, $handle) {
+			$photo = HomeController::getPhotoByURL($handle);
+			if ($photo != null) {
+				$photo->date = date('Y-m-d G:i:s', $info->photo->dates->posted);
+				$photo->url = $info->photo->urls->url[0]->_content;
+				$photo->save();
+			}
+		});
 
 		return "ok";
 	}
