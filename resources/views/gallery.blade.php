@@ -2,16 +2,14 @@
 
 @section('content')
 
-<?php $current_url = url($set->subscriber->username . '/' . $set->year) ?>
-
 <div class="container">
 	<div class="row">
 		<div class="col-md-12">
 			<h3>
-				This is the gallery of photos shoted by {{ $set->subscriber->username }} in {{ $set->year }}.
+				This is the gallery of photos shoted by {{ $set->subscriber->username }}.
 			</h3>
 			<p>
-				Click on all of them you like more; within <b>{{ floor((((strtotime($set->created_at) + (60 * 60 * 24 * 15) - time()) / 60) / 60) / 24) }} days</b>, the <b>top 5</b> will be selected and printed by the author to preserve the memories of the year. <a href="{{ url('/') }}">Read more about.</a>
+				Click on all of them you like more; within <b>{{ floor((((strtotime($set->created_at) + (60 * 60 * 24 * 15) - time()) / 60) / 60) / 24) }} days</b>, the <b>top 5</b> will be selected and printed by the author to preserve his memories. <a href="{{ url('/') }}">Read more about.</a>
 			</p>
 		</div>
 	</div>
@@ -20,9 +18,7 @@
 		<div class="col-md-12">
 			<div class="pull-right">
 				<h5>Share this page</h5>
-				<a href="https://twitter.com/share?url={{ rawurlencode($current_url) }}&text=help%20to%20choose%20the%20best%20photos%20of%20{{ $set->year }}%20to%20print%20and%20preserve" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600');return false;" target="_blank" alt="Share on Twitter"><img width="50px" src="{{ url('img/twitter.png') }}" /></a>
-				<a href="http://www.facebook.com/sharer.php?u={{ rawurlencode($current_url) }}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600');return false;" target="_blank" alt="Share on Facebook"><img width="50px" src="{{ url('img/facebook.png') }}" /></a>
-				<a href="https://plus.google.com/share?url={{ rawurlencode($current_url) }}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=350,width=480');return false;" target="_blank" alt="Share on Google+"><img width="50px" src="{{ url('img/gplus.png') }}" /></a>
+				@include('social', ['set' => $set])
 			</div>
 		</div>
 	</div>
@@ -43,9 +39,7 @@
 		<div class="col-md-12">
 			<h3>
 				Share this page on
-				<a href="https://twitter.com/share?url={{ rawurlencode($current_url) }}&text=help%20to%20choose%20the%20best%20photos%20of%20{{ $set->year }}%20to%20print%20and%20preserve" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600');return false;" target="_blank" alt="Share on Twitter"><img src="{{ url('img/twitter.png') }}" /></a>
-				<a href="http://www.facebook.com/sharer.php?u={{ rawurlencode($current_url) }}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600');return false;" target="_blank" alt="Share on Facebook"><img src="{{ url('img/facebook.png') }}" /></a>
-				<a href="https://plus.google.com/share?url={{ rawurlencode($current_url) }}" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=350,width=480');return false;" target="_blank" alt="Share on Google+"><img src="{{ url('img/gplus.png') }}" /></a>
+				@include('social', ['set' => $set])
 			</h3>
 		</div>
 	</div>

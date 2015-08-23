@@ -17,4 +17,4 @@ Route::post('/init', 'HomeController@init');
 Route::get('/download/{id}', 'HomeController@download');
 Route::get('/vote/{id}', 'HomeController@vote');
 Route::get('/unvote/{id}', 'HomeController@unvote');
-Route::get('/{username}/{year}', 'HomeController@userpage');
+Route::get('/{username}/{id}', 'HomeController@userpage');

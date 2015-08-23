@@ -23,6 +23,6 @@ class Set extends Model
 
 	public function url()
 	{
-		return url($this->subscriber->username . '/' . $this->year);
+		return url($this->subscriber->username . '/' . $this->id);
 	}
 }

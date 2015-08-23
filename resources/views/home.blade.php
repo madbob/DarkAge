@@ -46,12 +46,22 @@
 	<div class="row">
 		<form class="form-horizontal" method="POST" action="{{ url('/startup') }}">
 			<input type="hidden" name="_token" value="{{ csrf_token() }}">
-			<input type="hidden" name="year" value="{{ date('Y') - 1 }}">
 
-			<div class="col-md-9 form-group form-group-lg">
-				<input class="form-control" type="url" name="url" required="required" placeholder="Paste here URL of your Flickr photostream, e.g. https://www.flickr.com/photos/your_username/" autocomplete="off">
+			<div class="col-md-8">
+				<div class="form-group form-group-lg">
+					<input class="form-control" type="url" name="url" required="required" placeholder="URL of your Flickr photostream, e.g. https://www.flickr.com/photos/your_username/" autocomplete="off">
+				</div>
 			</div>
-			<div class="col-md-3">
+			<div class="col-md-2">
+				<div class="form-group form-group-lg">
+					<select class="form-control" name="timespan">
+						<option value="1">Last Month</option>
+						<option value="6">Last Six Months</option>
+						<option value="12">Last Year</option>
+					</select>
+				</div>
+			</div>
+			<div class="col-md-2">
 				<button class="btn btn-primary btn-lg pull-right" type="submit" name="action">Take Action Now</button>
 			</div>
 		</form>

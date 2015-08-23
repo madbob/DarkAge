@@ -110,15 +110,13 @@ class HomeController extends Controller
 	public function startup(Request $request)
 	{
 		$url = $request->input('url');
-		$year = $request->input('year');
+		$timespan = $request->input('timespan');
+
+		$startdate = date('Y-m-d', strtotime(sprintf('-%d month', $timespan)));
+		$enddate = date('Y-m-d');
 
 		if (preg_match('/^.*flickr.com\/photos\/([^\/]*)\/.*$/', $url, $matches) != 1) {
 			Session::flash('message', 'Unable to read URL. It should be something like https://www.flickr.com/photos/YOUR_ID/');
-			return Redirect::to('/');
-		}
-
-		if ($year < 2010 || $year >= date('Y')) {
-			Session::flash('message', 'Selected year must be included between 2010 and ' . (date('Y') - 1));
 			return Redirect::to('/');
 		}
 
@@ -131,16 +129,17 @@ class HomeController extends Controller
 			$subscriber->save();
 		}
 		else {
-			$test = Set::where('subscriber_id', '=', $subscriber->id)->where('year', '=', $year)->count();
-			if ($test != 0)
-				return Redirect::to('/' . $username . '/' . $year);
+			$test_set = Set::where('subscriber_id', '=', $subscriber->id)->where('startdate', '=', $startdate)->where('enddate', '=', $enddate)->first();
+			if ($test_set != null)
+				return Redirect::to($test_set->url());
 		}
 
 		$sets = Set::where(DB::raw('created_at + INTERVAL 15 DAY'), '<', DB::raw('NOW()'))->orderBy('created_at', 'desc')->take(5)->get();
 
 		$set = new Set();
 		$set->subscriber_id = $subscriber->id;
-		$set->year = $year;
+		$set->startdate = $startdate;
+		$set->enddate = $enddate;
 		$set->save();
 
 		return view('interstice', ['current_set' => $set, 'sets' => $sets]);
@@ -156,8 +155,8 @@ class HomeController extends Controller
 		$params = array(
 			'method' => 'flickr.photos.search',
 			'user_id' => $set->subscriber->username,
-			'min_upload_date' => sprintf('%d-01-01', $set->year),
-			'max_upload_date' => sprintf('%d-12-31', $set->year),
+			'min_upload_date' => $set->startdate,
+			'max_upload_date' => $set->enddate,
 			'per_page' => 500,
 			'page' => 0
 		);
@@ -165,6 +164,12 @@ class HomeController extends Controller
 		do {
 			$params['page'] = $params['page'] + 1;
 			$data = $this->doCall($params);
+
+			if ($data->photos->pages == 0) {
+				Session::flash('message', 'No photos found for the selected timespan');
+				$set->delete();
+				return "ko";
+			}
 
 			foreach($data->photos->photo as $photo)
 				$ids[] = $photo->id;
@@ -224,17 +229,14 @@ class HomeController extends Controller
 		return "ok";
 	}
 
-	public function userpage($username, $year)
+	public function userpage($username, $set)
 	{
 		$subscriber = Subscriber::where('username', '=', $username)->first();
 		if ($subscriber == null)
 			return Redirect::to('/');
 
-		if (is_numeric($year) == false || $year < 2010 || $year >= date('Y'))
-			return Redirect::to('/');
-
-		$set = Set::where('subscriber_id', '=', $subscriber->id)->where('year', '=', $year)->first();
-		if ($set == null)
+		$set = Set::find($set);
+		if ($set == null || $set->subscriber_id != $subscriber->id)
 			return Redirect::to('/');
 
 		$created = strtotime($set->created_at);
