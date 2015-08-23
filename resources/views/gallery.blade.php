@@ -48,11 +48,11 @@
 <script type="text/javascript">
 
 $(document).ready(function() {
-	$('.gallery img').unveil(400, function() {
+	$('.gallery img').unveil(400);
+
+	$('.gallery img').load(function() {
 		minigrid('.gallery', '.wrap', 0);
 	});
-
-	minigrid('.gallery', '.wrap', 0);
 
 	$('.gallery img').click(function() {
 		var selected = $(this).hasClass('selected');
